@@ -5,6 +5,7 @@ const validator = require('validator');
 
 // REGISTER
 exports.register = async (req, res) => {
+  console.log(req.body);
   const { name, email, phone, password, role } = req.body;
   if (!validator.isStrongPassword(password)) {
     return res.status(400).json({ message: 'Weak password' });
