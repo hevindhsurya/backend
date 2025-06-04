@@ -9,7 +9,7 @@ exports.register = async (req, res) => {
   if (!validator.isStrongPassword(password)) {
     return res.status(400).json({ message: 'Weak password' });
   }
-
+  console.log(req.body);
   const exists = await User.findOne({ email });
   if (exists) return res.status(400).json({ message: 'User already exists' });
 
@@ -23,7 +23,7 @@ exports.login = async (req, res) => {
   const user = await User.findOne({
     $or: [{ email: identifier }, { name: identifier }]
   });
-
+  console.log(req.body);
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
