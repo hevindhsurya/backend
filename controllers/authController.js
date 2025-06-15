@@ -2,19 +2,38 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { generateToken } = require('../utils/token');
 const validator = require('validator');
+const Contact = require('../models/Contact');
 
 // REGISTER
 exports.register = async (req, res) => {
-  const { name, email, phone, password, role } = req.body;
-  if (!validator.isStrongPassword(password)) {
-    return res.status(400).json({ message: 'Weak password' });
+  const { name, email, phone, password, role, recaptchaToken } = req.body;
+  if (!recaptchaToken) {
+    return res.status(400).json({ message: 'reCAPTCHA token is missing' });
   }
-  console.log(req.body);
-  const exists = await User.findOne({ email });
-  if (exists) return res.status(400).json({ message: 'User already exists' });
-
-  const user = await User.create({ name, email, phone, password, role });
-  res.status(201).json({ message: 'User registered. Please verify email.' });
+  const secretKey = '6LeEgWErAAAAABYtD3HwTQONKw2gdMKhNWA1aLis';
+  const verificationURL = `https://www.google.com/recaptcha/api/siteverify`;
+  try {
+    const response = await axios.post(verificationURL, null, {
+      params: {
+        secret: secretKey,
+        response: recaptchaToken
+      }
+    });
+    const data = response.data;
+    if (!data.success) {
+      return res.status(400).json({ message: 'Failed CAPTCHA verification' });
+    }
+    if (!validator.isStrongPassword(password)) {
+      return res.status(400).json({ message: 'Weak password' });
+    }
+    const exists = await User.findOne({ email });
+    if (exists) return res.status(400).json({ message: 'User already exists' });
+    const user = await User.create({ name, email, phone, password, role });
+    res.status(201).json({ message: 'User registered. Please verify email.' });
+  } catch (error) {
+    console.error('reCAPTCHA or registration error:', error.message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
 
 // LOGIN
@@ -22,8 +41,8 @@ exports.login = async (req, res) => {
   const { identifier, password } = req.body;
   const user = await User.findOne({
     $or: [{ email: identifier }, { name: identifier }]
-  });
-  console.log(req.body);
+  });.0
+  
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -66,4 +85,39 @@ exports.resetPassword = async (req, res) => {
   await user.save();
 
   res.json({ message: 'Password reset successful' });
+};
+
+// CONTACT 
+exports.submitContactForm = async (req, res) => {
+  const { name, email, phone, topic, message, recaptchaToken } = req.body;
+
+  if (!recaptchaToken) {
+    return res.status(400).json({ message: 'reCAPTCHA token is missing' });
+  }
+
+  const secretKey = '6LeEgWErAAAAABYtD3HwTQONKw2gdMKhNWA1aLis';
+  const verificationURL = `https://www.google.com/recaptcha/api/siteverify`;
+  
+  try {  
+    const response = await axios.post(verificationURL, null, {
+      params: {
+        secret: secretKey,
+        response: recaptchaToken
+      }
+    });
+
+    const data = response.data;
+
+    if (!data.success) {
+      return res.status(400).json({ message: 'Failed CAPTCHA verification' });
+    }
+
+    const contact = new Contact({ name, email, phone, topic, message });
+    await contact.save();
+
+    res.status(200).json({ message: 'Form submitted successfully' });
+  } catch (error) {
+    console.error('reCAPTCHA error:', error.message);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
