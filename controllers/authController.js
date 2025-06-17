@@ -105,15 +105,17 @@ exports.submitContactForm = async (req, res) => {
         response: recaptchaToken
       }
     });
-
+    console.log(response);
     const data = response.data;
 
     if (!data.success) {
       return res.status(400).json({ message: 'Failed CAPTCHA verification' });
     }
+    console.log(response);
 
     const contact = new Contact({ name, email, phone, topic, message });
     await contact.save();
+    console.log(contact);
 
     res.status(200).json({ message: 'Form submitted successfully' });
   } catch (error) {
