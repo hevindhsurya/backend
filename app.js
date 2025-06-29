@@ -1,4 +1,3 @@
-// app.js
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
@@ -8,8 +7,8 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: 'https://frontend-nine-lyart.vercel.app',
-  credentials: true
+  origin: 'https://frontend-nine-lyart.vercel.app', 
+  credentials: true,             
 }));
 app.use(express.json());
 app.use(cookieParser());

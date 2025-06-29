@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
     enum: ['Admin', 'Owner', 'Tenant', 'Buyer', 'Content Creator', 'User'],
     default: 'User',
   },
+  likedBlogs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }],
+  watchlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Blog' }],
   isVerified: { type: Boolean, default: false },
   resetToken: String,
   resetTokenExpiry: Date,
